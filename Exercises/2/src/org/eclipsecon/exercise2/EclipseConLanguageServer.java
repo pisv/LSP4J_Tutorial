@@ -2,7 +2,6 @@ package org.eclipsecon.exercise2;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.ServerCapabilities;

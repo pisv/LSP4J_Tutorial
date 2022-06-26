@@ -40,8 +40,6 @@ This is an interactive tutorial, if you are viewing this on GitHub, download the
  - [LSP4J_Tutorial/Exercises/3](/Exercises/3)
  - [LSP4J_Tutorial/Exercises/4](/Exercises/4)
 
-Ignore the `LSP4J_Tutorial/Exercises/X/src` and `LSP4J_Tutorial/Exercises/X/src/org/eclipsecon/exerciseX` projects.
-
 ***
 
 ## Introduction

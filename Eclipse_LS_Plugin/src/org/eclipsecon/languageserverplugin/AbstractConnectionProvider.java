@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+
 import org.eclipse.lsp4e.server.StreamConnectionProvider;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
@@ -93,6 +94,11 @@ public class AbstractConnectionProvider  implements StreamConnectionProvider {
 				super.write(b, off, len);
 			}
 		};
+	}
+
+	@Override
+	public InputStream getErrorStream() {
+		return null;
 	}
 
 	@Override

@@ -8,12 +8,15 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.CodeLensParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.CompletionParams;
+import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
@@ -22,32 +25,32 @@ import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.DocumentFormattingParams;
 import org.eclipse.lsp4j.DocumentHighlight;
+import org.eclipse.lsp4j.DocumentHighlightParams;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingParams;
 import org.eclipse.lsp4j.DocumentRangeFormattingParams;
+import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.HoverParams;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.MarkedString;
-import org.eclipse.lsp4j.MessageParams;
-import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.RenameParams;
-import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.eclipse.lsp4j.SignatureHelp;
+import org.eclipse.lsp4j.SignatureHelpParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
-import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
-import org.eclipsecon.exercise4.EclipseConMap;
 import org.eclipsecon.exercise4.EclipseConDocumentModel.Route;
 import org.eclipsecon.exercise4.EclipseConDocumentModel.VariableDefinition;
 
+@SuppressWarnings("deprecation")
 public class EclipseConTextDocumentService implements TextDocumentService {
 
 	private final Map<String, EclipseConDocumentModel> docs = Collections.synchronizedMap(new HashMap<>());
@@ -103,7 +106,7 @@ public class EclipseConTextDocumentService implements TextDocumentService {
 
 	@Override
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(
-			TextDocumentPositionParams position) {
+			CompletionParams params) {
 		return CompletableFuture.supplyAsync(() -> Either.forLeft(EclipseConMap.INSTANCE.all.stream()
 				.map(word -> {
 					CompletionItem item = new CompletionItem();
@@ -119,12 +122,12 @@ public class EclipseConTextDocumentService implements TextDocumentService {
 	}
 
 	@Override
-	public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
+	public CompletableFuture<Hover> hover(HoverParams params) {
 		return CompletableFuture.supplyAsync(() -> {
-			EclipseConDocumentModel doc = docs.get(position.getTextDocument().getUri());
+			EclipseConDocumentModel doc = docs.get(params.getTextDocument().getUri());
 			Hover res = new Hover();
 			res.setContents(doc.getResolvedRoutes().stream()
-				.filter(route -> route.line == position.getPosition().getLine())
+				.filter(route -> route.line == params.getPosition().getLine())
 				.map(route -> route.name)
 				.map(EclipseConMap.INSTANCE.type::get)
 				.map(this::getHoverContent)
@@ -147,25 +150,25 @@ public class EclipseConTextDocumentService implements TextDocumentService {
 	}
 
 	@Override
-	public CompletableFuture<SignatureHelp> signatureHelp(TextDocumentPositionParams position) {
+	public CompletableFuture<SignatureHelp> signatureHelp(SignatureHelpParams params) {
 		return null;
 	}
 
 	@Override
-	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
 		return CompletableFuture.supplyAsync(() -> {
-			EclipseConDocumentModel doc = docs.get(position.getTextDocument().getUri());
-			String variable = doc.getVariable(position.getPosition().getLine(), position.getPosition().getCharacter()); 
+			EclipseConDocumentModel doc = docs.get(params.getTextDocument().getUri());
+			String variable = doc.getVariable(params.getPosition().getLine(), params.getPosition().getCharacter()); 
 			if (variable != null) {
 				int variableLine = doc.getDefintionLine(variable);
 				if (variableLine == -1) {
-					return Collections.emptyList();
+					return null;
 				}
-				Location location = new Location(position.getTextDocument().getUri(), new Range(
+				Location location = new Location(params.getTextDocument().getUri(), new Range(
 					new Position(variableLine, 0),
 					new Position(variableLine, variable.length())
 					));
-				return Collections.singletonList(location);
+				return Either.forLeft(Collections.singletonList(location));
 			}
 			return null;
 		});
@@ -200,12 +203,12 @@ public class EclipseConTextDocumentService implements TextDocumentService {
 	}
 
 	@Override
-	public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position) {
+	public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams params) {
 		return null;
 	}
 
 	@Override
-	public CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params) {
+	public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
 		EclipseConDocumentModel model = docs.get(params.getTextDocument().getUri());
 		if(model == null)
 			return null;
@@ -222,13 +225,13 @@ public class EclipseConTextDocumentService implements TextDocumentService {
 					symbol.setKind(SymbolKind.String);
 					symbol.setName(((Route) line).name);
 				}
-				return symbol;
+				return Either.<SymbolInformation, DocumentSymbol>forLeft(symbol);
 			}).collect(Collectors.toList())
 		);
 	}
 
 	@Override
-	public CompletableFuture<List<? extends Command>> codeAction(CodeActionParams params) {
+	public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
 		return null;
 	}
 

@@ -8,21 +8,25 @@ The language server we will be developing through these exercises is the Eclipse
 
 In this exercise, we will complete the Exercise1 Project with the required connections and foundation steps to create a Language Server.
 
-> **NOTE:** When you first open the project there will be errors; this is OK. Once you complete the exercise they will be gone.
+> **NOTE:** When you first open the project there will be errors; this is OK. Once you set the target platform they will be gone.
+
+## Target Platform
+
+Open the [target-platform.target](/Eclipse_LS_Plugin/target-platform.target) file in the `org.eclipsecon.languageserverplugin` project and click on **Set as Active Target Platform**.
 
 ## MANIFEST.MF
 
-Start by opening the [MANIFEST.MF](/Exercises/1/META-INF/MANIFEST.MF) file. Here we will add the dependencies of the project and the exported package; which will be the LS for our plug-ins to consume.
+Open the [MANIFEST.MF](/Exercises/1/META-INF/MANIFEST.MF) file. Here we will add the dependencies of the project and the exported package; which will be the LS for our plug-ins to consume.
 
 ### Dependencies
 
 Either in the **Dependencies** tab or with the **Require-Bundle** tag, add the following two packages:
 
-**`org.eclipse.lsp4j`** Version 0.2.0
+**`org.eclipse.lsp4j`** Version 0.14.0
 
-This package includes the interface for implementations of the LSP, `lsp4j.services.LanguageServer`, and all the request, parameter, and response formats for the messages sent between the server and client.
+This package includes the interface for implementations of the LSP, `org.eclipse.lsp4j.services.LanguageServer`, and all the request, parameter, and response formats for the messages sent between the server and client.
 
-**`org.eclipse.lsp4j.jsonrpc`** Version 0.2.0
+**`org.eclipse.lsp4j.jsonrpc`** Version 0.14.0
 
 We use only one class from this package: `Launcher` which is the entry point for applications that use LSP4J. A `Launcher` does all the wiring that is necessary to connect your endpoint via an input stream and an output stream.
 

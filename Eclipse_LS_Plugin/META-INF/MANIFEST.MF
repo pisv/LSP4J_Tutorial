@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Language Server Plugin
 Bundle-SymbolicName: org.eclipsecon.languageserverplugin;singleton:=true
+Automatic-Module-Name: org.eclipsecon.languageserverplugin
 Bundle-Version: 1.0.0
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.eclipse.core.contenttype;bundle-version="3.6.0",
