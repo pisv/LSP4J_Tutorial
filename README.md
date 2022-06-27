@@ -27,7 +27,8 @@
 
 ### Required programs
 
-We will be using [The Eclipse IDE](https://www.eclipse.org/home/index.php) to work through the tutorial. Eclipse is not mandatory for lsp4j, but included in this repository is an Eclipse Plugin to allow testing your language server.
+We will be using [Eclipse IDE for Eclipse Committers](https://www.eclipse.org/downloads/packages/release/2022-06/r/eclipse-ide-eclipse-committers), which includes everything that is needed to work through the tutorial. Eclipse is not mandatory for lsp4j, but included in this repository is an Eclipse Plugin to allow testing your language server.
+
 
 ### Exercise Preparation
 
