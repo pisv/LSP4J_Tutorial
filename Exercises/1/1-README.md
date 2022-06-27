@@ -12,7 +12,7 @@ In this exercise, we will complete the Exercise1 Project with the required conne
 
 ## Target Platform
 
-Open the [target-platform.target](/Eclipse_LS_Plugin/target-platform.target) file in the `org.eclipsecon.languageserverplugin` project and click on **Set as Active Target Platform**.
+Open the [target-platform.target](/Eclipse_LS_Plugin/target-platform.target) file in the `org.eclipsecon.languageserverplugin` project with the **Target Editor** (right-click on the file, choose **Open With > Target Editor**). Then, in the **Definition** tab, click on **Set as Active Target Platform** (the hyperlink in the top-right corner of the editor).
 
 ## MANIFEST.MF
 
