@@ -5,8 +5,10 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.Pipe;
+import java.util.Arrays;
+import java.util.concurrent.Future;
 
 import org.eclipse.lsp4e.server.StreamConnectionProvider;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -14,31 +16,41 @@ import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
 
-public class AbstractConnectionProvider  implements StreamConnectionProvider {
+public class AbstractConnectionProvider implements StreamConnectionProvider {
 
-	private InputStream inputStream  ;
+	private InputStream inputStream;
 	private OutputStream outputStream;
 	private LanguageServer ls;
 	protected Launcher<LanguageClient> launcher;
-	
+	private Runnable stopRunnable;
+
 	public AbstractConnectionProvider(LanguageServer ls) {
 		this.ls = ls;
 	}
-	
+
 	@Override
 	public void start() throws IOException {
-		PipedInputStream in = new PipedInputStream();
-		PipedOutputStream out = new PipedOutputStream();
-		PipedInputStream in2 = new PipedInputStream();
-		PipedOutputStream out2 = new PipedOutputStream();
-		
-		in.connect(out2);
-		out.connect(in2);
-	
-		launcher = LSPLauncher.createServerLauncher(ls, in2, out2);
-		inputStream = in;
-		outputStream = out;
-		launcher.startListening();
+		Pipe serverOutputToClientInput = Pipe.open();
+		Pipe clientOutputToServerInput = Pipe.open();
+
+		inputStream = Channels.newInputStream(serverOutputToClientInput.source());
+		outputStream = Channels.newOutputStream(clientOutputToServerInput.sink());
+		InputStream serverInputStream = Channels.newInputStream(clientOutputToServerInput.source());
+		OutputStream serverOutputStream = Channels.newOutputStream(serverOutputToClientInput.sink());
+
+		launcher = LSPLauncher.createServerLauncher(ls, serverInputStream, serverOutputStream);
+		Future<Void> listener = launcher.startListening();
+
+		stopRunnable = () -> {
+			listener.cancel(true);
+			Arrays.asList(inputStream, outputStream, serverInputStream, serverOutputStream).forEach(stream -> {
+				try {
+					stream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			});
+		};
 	}
 
 	@Override
@@ -103,43 +115,9 @@ public class AbstractConnectionProvider  implements StreamConnectionProvider {
 
 	@Override
 	public void stop() {
+		if (stopRunnable != null) {
+			stopRunnable.run();
+			stopRunnable = null;
+		}
 	}
-	
-	/*
-	 * 
-	 * 
-	 * try {
-				DidChangeConfigurationParams params = new DidChangeConfigurationParams();
-				Map<String, Object> msbuildProjectTools = new HashMap<>();
-				List<String> completionsFromProject = new ArrayList<>();
-				completionsFromProject.add("Property"); //$NON-NLS-1$
-				completionsFromProject.add("ItemType"); //$NON-NLS-1$
-				completionsFromProject.add("ItemMetadata"); //$NON-NLS-1$
-				completionsFromProject.add("Target"); //$NON-NLS-1$
-				completionsFromProject.add("Task"); //$NON-NLS-1$
-
-				List<String> experimentalFeatures = new ArrayList<>();
-				experimentalFeatures.add("empty-completion-lists"); //$NON-NLS-1$
-				experimentalFeatures.add("expressions"); //$NON-NLS-1$
-
-				Map<String, Object> language = new HashMap<>();
-				language.put("enable", true); //$NON-NLS-1$
-				language.put("disableHover", false); //$NON-NLS-1$
-				language.put("logLevel", "Information"); //$NON-NLS-1$ //$NON-NLS-2$
-				language.put("experimentalFeatures", experimentalFeatures); //$NON-NLS-1$
-				language.put("completionsFromProject", completionsFromProject); //$NON-NLS-1$
-				msbuildProjectTools.put("language", language); //$NON-NLS-1$
-
-				params.setSettings(
-						Collections.singletonMap("msbuildProjectTools", //$NON-NLS-1$
-								Collections.singletonMap("language", language)));//$NON-NLS-1$
-
-				info.getLanguageClient().getWorkspaceService().didChangeConfiguration(params);
-
-				CompletableFuture<Hover> hover = info.getLanguageClient().getTextDocumentService().hover(LSPEclipseUtils.toTextDocumentPosistionParams(info.getFileUri(), offset, info.getDocument()));
-				requests.add(hover.thenAccept(hoverResults::add));
-			} catch (BadLocationException e) {
-				LanguageServerPlugin.logError(e);
-			}
-	 */
 }
